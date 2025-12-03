@@ -17,6 +17,8 @@ fn main() {
 enum Direction {
     Left,
     Right,
+    Up,
+    Down,
 }
 
 fn setup(
@@ -36,6 +38,7 @@ fn setup(
         Transform::from_xyz(0.0, 0.0, 0.0),
         GlobalTransform::default(),
         Direction::Right,
+
     ));
 }
 
@@ -52,7 +55,7 @@ fn snake_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>, 
     mut head_position: Query<(&mut Direction, &mut Transform)>
 ) {
-    for (mut head, mut transform) in &mut head_position {
+    for (_head, mut transform) in &mut head_position {
         if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
             transform.translation.x -= 50.;
         }
