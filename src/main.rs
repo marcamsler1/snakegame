@@ -9,8 +9,14 @@ fn main() {
             Wireframe2dPlugin::default(),
         ))
         .add_systems(Startup, setup)
-        .add_systems(Update, toggle_wireframe)
+        .add_systems(Update, (toggle_wireframe, snake_movement))
         .run();
+}
+
+#[derive(Component)]
+enum Direction {
+    Left,
+    Right,
 }
 
 fn setup(
@@ -22,11 +28,14 @@ fn setup(
 
     let snakehead = meshes.add(Circle::new(20.0));
 
-    let color = Color::srgb(193.0, 196.0, 0.0);
+    let color = Color::srgb(193.0/255.0, 196.0/255.0, 0.0/255.0);
 
     commands.spawn((
         Mesh2d(snakehead),
         MeshMaterial2d(materials.add(color)),
+        Transform::from_xyz(0.0, 0.0, 0.0),
+        GlobalTransform::default(),
+        Direction::Right,
     ));
 }
 
@@ -36,5 +45,23 @@ fn toggle_wireframe(
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
         wireframe_config.global = !wireframe_config.global;
+    }
+}
+
+fn snake_movement(
+    time: Res<Time>, 
+    mut head_position: Query<(&mut Direction, &mut Transform)>
+) {
+    for (mut head, mut transform) in &mut head_position {
+        match *head {
+            Direction::Right => transform.translation.x += 150. * time.delta_secs(),
+            Direction::Left => transform.translation.x -= 150. * time.delta_secs(),
+        }
+
+        if transform.translation.x > 200. {
+            *head = Direction::Left;
+        } else if transform.translation.x < -200. {
+            *head = Direction::Right;
+        }
     }
 }
