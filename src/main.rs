@@ -20,12 +20,12 @@ fn setup(
 ) {
     commands.spawn(Camera2d);
 
-    let Snakehead = meshes.add(Circle::new(50.0));
+    let snakehead = meshes.add(Circle::new(20.0));
 
-    let color = Color::hsl(360.0, 1.0, 50.0);
+    let color = Color::srgb(193.0, 196.0, 0.0);
 
     commands.spawn((
-        Mesh2d(Snakehead),
+        Mesh2d(snakehead),
         MeshMaterial2d(materials.add(color)),
     ));
 }
