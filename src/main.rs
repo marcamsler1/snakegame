@@ -49,19 +49,22 @@ fn toggle_wireframe(
 }
 
 fn snake_movement(
-    time: Res<Time>, 
+    keyboard_input: Res<ButtonInput<KeyCode>>, 
     mut head_position: Query<(&mut Direction, &mut Transform)>
 ) {
     for (mut head, mut transform) in &mut head_position {
-        match *head {
-            Direction::Right => transform.translation.x += 150. * time.delta_secs(),
-            Direction::Left => transform.translation.x -= 150. * time.delta_secs(),
+        if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
+            transform.translation.x -= 50.;
+        }
+        if keyboard_input.just_pressed(KeyCode::ArrowRight) {
+            transform.translation.x += 50.;
+        }
+        if keyboard_input.just_pressed(KeyCode::ArrowDown) {
+            transform.translation.y -= 50.;
+        }
+        if keyboard_input.just_pressed(KeyCode::ArrowUp) {
+            transform.translation.y += 50.;
         }
 
-        if transform.translation.x > 200. {
-            *head = Direction::Left;
-        } else if transform.translation.x < -200. {
-            *head = Direction::Right;
-        }
     }
 }
