@@ -6,6 +6,9 @@ use rand::Rng;
 // Constants
 const GRID_WIDTH: u32 = 15;
 const GRID_HEIGHT: u32 = 15;
+const SNAKE_HEAD_COLOR: bevy::prelude::Color = Color::srgb(193.0/255.0, 196.0/255.0, 0.0/255.0);
+const SNAKE_SEGMENT_COLOR: bevy::prelude::Color = Color::srgb(216.0/255.0, 219.0/255.0, 22.0/255.0);
+const FOOD_COLOR: bevy::prelude::Color = Color::srgb(171.0/255.0, 14.0/255.0, 14.0/255.0);
 
 
 // Components
@@ -58,6 +61,13 @@ struct SnakeHead {
     direction: Direction,
 }
 
+// Snake tail
+#[derive(Component)]
+struct SnakeSegment;
+
+#[derive(Resource, Default)]
+struct SnakeSegments(Vec<Entity>);
+
 // Food
 #[derive(Component)]
 struct Food;
@@ -91,6 +101,9 @@ fn main() {
             TimerMode::Repeating,
         )))
 
+        // Add the snake tail
+        .insert_resource(SnakeSegments::default())
+
         // Start systems
         .add_systems(Startup, setup)
 
@@ -99,6 +112,7 @@ fn main() {
             toggle_wireframe, 
             snake_movement_input.before(snake_movement),
             snake_movement,
+            snake_follow_segments.after(snake_movement),
             food_spawner
         ))
 
@@ -113,25 +127,37 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut segments: ResMut<SnakeSegments>,
 ) {
 
     // Spawn a 2d camera
     commands.spawn(Camera2d);
 
-    // Setup for the snake head
+    // Spawn the snake head
     let mesh = meshes.add(Rectangle::new(1.0, 1.0));
-    let snake_color = Color::srgb(193.0/255.0, 196.0/255.0, 0.0/255.0);
+    let snake_head_color = SNAKE_HEAD_COLOR;
 
-    // Spawn the snake head entity
-    commands.spawn((
+    let head_id = commands.spawn((
         Mesh2d(mesh),
-        MeshMaterial2d(materials.add(snake_color)),
+        MeshMaterial2d(materials.add(snake_head_color)),
         Position { x: 3, y: 3 },
         Size::square(1.0),
         SnakeHead { direction: Direction::Up },
         Transform::default(),
         GlobalTransform::default(),
-    ));
+    ))
+    .id();
+
+    // Spawn the first tail segment
+
+    let tail_id = spawn_segment(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Position { x:3, y: 2},
+    );
+
+    *segments = SnakeSegments(vec![head_id, tail_id]);
 }
 
 // Toggle wireframe
@@ -141,6 +167,56 @@ fn toggle_wireframe(
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
         wireframe_config.global = !wireframe_config.global;
+    }
+}
+
+// Spawn a snake segment
+fn spawn_segment(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<ColorMaterial>,
+    position: Position,
+) -> Entity {
+    let mesh = meshes.add(Rectangle::new(1.0, 1.0));
+    let snake_segment_color = SNAKE_SEGMENT_COLOR;
+
+    commands.spawn((
+        Mesh2d(mesh),
+        MeshMaterial2d(materials.add(snake_segment_color)),
+        SnakeSegment,
+        position,
+        Size::square(1.0 * 0.8),
+        Transform::default(),
+        GlobalTransform::default(),
+    ))
+    .id()
+}
+
+// Segments need to follow the head
+fn snake_follow_segments(
+    time: Res<Time>,
+    mut move_timer: ResMut<MovementTimer>,
+    mut segments: ResMut<SnakeSegments>,
+    mut positions: Query<&mut Position>,
+) {
+    if !move_timer.0.tick(time.delta()).just_finished() {
+        return;
+    }
+    
+    // Make a copy of all current segment positions
+    let mut previous_positions = Vec::new();
+
+    for &entity in segments.0.iter() {
+        if let Ok(pos) = positions.get(entity) {
+            previous_positions.push(*pos);
+        }
+    }
+
+    // Move each segment except the head
+    for (i, &entity) in segments.0.iter().enumerate().skip(1) {
+        if let Ok(mut pos) = positions.get_mut(entity) {
+            *pos = previous_positions[i -1]; 
+        }
     }
 }
 
@@ -254,7 +330,7 @@ fn food_spawner(
         let y = rng.gen_range(0..GRID_HEIGHT as i32);
 
         let mesh = meshes.add(Circle::new(0.5));
-        let color = Color::srgb(171.0/255.0, 14.0/255.0, 14.0/255.0);
+        let color = FOOD_COLOR;
 
         commands.spawn((
             Mesh2d(mesh),
