@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy", tag = "v0.17.3" }
+rand = "0.8"
 
 [profile.dev]
 opt-level = 1

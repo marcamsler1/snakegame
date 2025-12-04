@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy::sprite_render::{Wireframe2dConfig, Wireframe2dPlugin};
 use bevy::window::PrimaryWindow;
+use rand::Rng;
+
 
 const GRID_WIDTH: u32 = 15;
 const GRID_HEIGHT: u32 = 15;
@@ -36,14 +38,24 @@ enum Direction {
 #[derive(Component)]
 struct SnakeHead;
 
+#[derive(Component)]
+struct Food;
+
+#[derive(Resource)]
+struct FoodSpawnTimer(Timer);
+
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
             Wireframe2dPlugin::default(),
         ))
+        .insert_resource(FoodSpawnTimer(Timer::from_seconds(
+            1.5, 
+            TimerMode::Repeating,
+        )))
         .add_systems(Startup, setup)
-        .add_systems(Update, (toggle_wireframe, snake_movement))
+        .add_systems(Update, (toggle_wireframe, snake_movement, food_spawner))
         .add_systems(PostUpdate, (position_translation, size_scaling))
         .run();
 }
@@ -57,11 +69,11 @@ fn setup(
     commands.spawn(Camera2d);
 
     let mesh = meshes.add(Circle::new(0.5));
-    let color = Color::srgb(193.0/255.0, 196.0/255.0, 0.0/255.0);
+    let snake_color = Color::srgb(193.0/255.0, 196.0/255.0, 0.0/255.0);
 
     commands.spawn((
         Mesh2d(mesh),
-        MeshMaterial2d(materials.add(color)),
+        MeshMaterial2d(materials.add(snake_color)),
         Position { x: 3, y: 3 },
         Size::square(1.0),
         SnakeHead,
@@ -145,5 +157,33 @@ fn position_translation(
             offset_y + pos.y as f32 * tile + tile / 2.0,
             0.0,
         );
+    }
+}
+
+fn food_spawner(
+    time: Res<Time>,
+    mut timer: ResMut<FoodSpawnTimer>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+
+    if timer.0.tick(time.delta()).just_finished() {
+        let mut rng = rand::thread_rng();
+        let x = rng.gen_range(0..GRID_WIDTH as i32);
+        let y = rng.gen_range(0..GRID_HEIGHT as i32);
+
+        let mesh = meshes.add(Circle::new(0.5));
+        let color = Color::srgb(171.0/255.0, 14.0/255.0, 14.0/255.0);
+
+        commands.spawn((
+            Mesh2d(mesh),
+            MeshMaterial2d(materials.add(color)),
+            Food,
+            Position { x, y },
+            Size::square(1.0),
+            Transform::default(),
+            GlobalTransform::default(),
+        ));
     }
 }
