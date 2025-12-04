@@ -3,16 +3,21 @@ use bevy::sprite_render::{Wireframe2dConfig, Wireframe2dPlugin};
 use bevy::window::PrimaryWindow;
 use rand::Rng;
 
-
+// Constants
 const GRID_WIDTH: u32 = 15;
 const GRID_HEIGHT: u32 = 15;
 
+
+// Components
+
+// Grid Position of an entity
 #[derive(Component, Clone, Copy, PartialEq, Eq)]
 struct Position {
     x: i32,
     y: i32,
 }
 
+// Grid Size
 #[derive(Component)]
 struct Size {
     width: f32,
@@ -27,22 +32,45 @@ impl Size {
     }
 }
 
-#[derive(Component)]
+// Movement direction of the snake
+#[derive(Component, PartialEq, Copy, Clone)]
 enum Direction {
     Left,
     Right,
     Up,
     Down,
 }
+impl Direction {
+    // Return the opposite of a direction
+    pub fn opposite(self) -> Self {
+        match self {
+            Self::Left => Self::Right,
+            Self::Right => Self::Left,
+            Self::Up => Self::Down,
+            Self::Down => Self::Up,
+        }
+    }
+}
 
+// Snake head
 #[derive(Component)]
-struct SnakeHead;
+struct SnakeHead {
+    direction: Direction,
+}
 
+// Food
 #[derive(Component)]
 struct Food;
 
+// Resources
+
+// Timer to spawn the foods
 #[derive(Resource)]
 struct FoodSpawnTimer(Timer);
+
+// Timer to control the tick speed of the snake movement
+#[derive(Resource)]
+struct MovementTimer(Timer);
 
 fn main() {
     App::new()
@@ -50,13 +78,33 @@ fn main() {
             DefaultPlugins,
             Wireframe2dPlugin::default(),
         ))
+
+        // Snake moves every .2 seconds
+        .insert_resource(MovementTimer(Timer::from_seconds(
+            0.20,
+            TimerMode::Repeating,
+        )))
+
+        // Food spawns every 1.5 seconds
         .insert_resource(FoodSpawnTimer(Timer::from_seconds(
             1.5, 
             TimerMode::Repeating,
         )))
+
+        // Start systems
         .add_systems(Startup, setup)
-        .add_systems(Update, (toggle_wireframe, snake_movement, food_spawner))
+
+        // Update systems
+        .add_systems(Update, (
+            toggle_wireframe, 
+            snake_movement_input.before(snake_movement),
+            snake_movement,
+            food_spawner
+        ))
+
+        // Update grid positions
         .add_systems(PostUpdate, (position_translation, size_scaling))
+
         .run();
 }
 
@@ -66,23 +114,27 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+
+    // Spawn a 2d camera
     commands.spawn(Camera2d);
 
-    let mesh = meshes.add(Circle::new(0.5));
+    // Setup for the snake head
+    let mesh = meshes.add(Rectangle::new(1.0, 1.0));
     let snake_color = Color::srgb(193.0/255.0, 196.0/255.0, 0.0/255.0);
 
+    // Spawn the snake head entity
     commands.spawn((
         Mesh2d(mesh),
         MeshMaterial2d(materials.add(snake_color)),
         Position { x: 3, y: 3 },
         Size::square(1.0),
-        SnakeHead,
-        Direction::Right,
+        SnakeHead { direction: Direction::Up },
         Transform::default(),
         GlobalTransform::default(),
     ));
 }
 
+// Toggle wireframe
 fn toggle_wireframe(
     mut wireframe_config: ResMut<Wireframe2dConfig>,
     keyboard: Res<ButtonInput<KeyCode>>,
@@ -92,30 +144,56 @@ fn toggle_wireframe(
     }
 }
 
-fn snake_movement(
+
+// Read the player input and update the snake direction
+fn snake_movement_input(
     keyboard_input: Res<ButtonInput<KeyCode>>, 
-    mut query: Query<&mut Position, With<SnakeHead>>,
+    mut heads: Query<&mut SnakeHead>,
 ) {
-    for mut pos in &mut query {
-        if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
-            pos.x -= 1;
-        }
-        if keyboard_input.just_pressed(KeyCode::ArrowRight) {
-            pos.x += 1;
-        }
-        if keyboard_input.just_pressed(KeyCode::ArrowDown) {
-            pos.y -= 1;
-        }
-        if keyboard_input.just_pressed(KeyCode::ArrowUp) {
-            pos.y += 1;
-        }
+    let mut head = heads.single_mut().expect("SnakeHead not found");
 
-        pos.x = pos.x.rem_euclid(GRID_WIDTH as i32);
-        pos.y = pos.y.rem_euclid(GRID_HEIGHT as i32);
+    let new_dir = if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
+            Direction::Left
+        } else if keyboard_input.just_pressed(KeyCode::ArrowRight) {
+            Direction::Right
+        } else if keyboard_input.just_pressed(KeyCode::ArrowDown) {
+            Direction::Down
+        } else if keyboard_input.just_pressed(KeyCode::ArrowUp) {
+            Direction::Up
+        } else {
+            return;
+        };
 
+    // Prevent turning into the opposite direction and crashing
+    if new_dir != head.direction.opposite() {
+        head.direction = new_dir;
     }
 }
 
+// Move the snake once every timer tick
+fn snake_movement(
+    time: Res<Time>,
+    mut timer: ResMut<MovementTimer>,
+    mut query: Query <(&mut Position, &SnakeHead)>,
+){
+    if !timer.0.tick(time.delta()).just_finished() {
+        return;
+    }
+
+    let (mut pos, head) = query.single_mut().expect("SnakeHead not found");
+
+    match head.direction {
+        Direction::Left => pos.x -=1,
+        Direction::Right => pos.x +=1,
+        Direction::Down => pos.y -=1,
+        Direction::Up => pos.y +=1
+    }
+
+    pos.x = pos.x.rem_euclid(GRID_WIDTH as i32);
+    pos.y = pos.y.rem_euclid(GRID_HEIGHT as i32);
+}
+
+// Scale sprites based on the tile size so the grid fits into the window
 fn size_scaling(
     windows: Query<&Window, With<PrimaryWindow>>,
     mut q: Query<(&Size, &mut Transform)>,
@@ -135,6 +213,7 @@ fn size_scaling(
     } 
 }
 
+// Convert grid coordinates into the screen coordinates
 fn position_translation(
     windows: Query<&Window, With<PrimaryWindow>>,
     mut q: Query<(&Position, &mut Transform)>,
@@ -160,6 +239,7 @@ fn position_translation(
     }
 }
 
+// Spawn food at a random grid position every x seconds
 fn food_spawner(
     time: Res<Time>,
     mut timer: ResMut<FoodSpawnTimer>,
