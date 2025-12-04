@@ -98,8 +98,8 @@ fn snake_movement(
             pos.y += 1;
         }
 
-        pos.x = (pos.x.rem_euclid(GRID_WIDTH as i32));
-        pos.y = (pos.y.rem_euclid(GRID_HEIGHT as i32));
+        pos.x = pos.x.rem_euclid(GRID_WIDTH as i32);
+        pos.y = pos.y.rem_euclid(GRID_HEIGHT as i32);
 
     }
 }
@@ -109,13 +109,18 @@ fn size_scaling(
     mut q: Query<(&Size, &mut Transform)>,
 ) {
     let window = windows.single().expect("no primary window");
+        
+    let tile_x = window.width() / GRID_WIDTH as f32;
+    let tile_y = window.height() / GRID_HEIGHT as f32;
+    let tile = tile_x.min(tile_y);
+
     for (size, mut transform) in &mut q {
         transform.scale = Vec3::new(
-            size.width / GRID_WIDTH as f32 * window.width(),
-            size.height / GRID_HEIGHT as f32 * window.height(),
+            size.width * tile,
+            size.height * tile,
             1.0,
         );
-    }
+    } 
 }
 
 fn position_translation(
@@ -124,15 +129,20 @@ fn position_translation(
 ) {
     let window = windows.single().expect("no primary window");
 
-    fn convert(pos: f32, window: f32, grid: f32) -> f32 {
-        let tile_size = window / grid;
-        pos / grid * window - window / 2. + tile_size / 2.
-    }
+    let tile_x = window.width() / GRID_WIDTH as f32;
+    let tile_y = window.height() / GRID_HEIGHT as f32;
+    let tile = tile_x.min(tile_y);
+
+    let board_width = tile * GRID_WIDTH as f32;
+    let board_height = tile * GRID_HEIGHT as f32;
+
+    let offset_x = -window.width() / 2.0 + board_width / 2.0;
+    let offset_y = -window.height() / 2.0 + board_height / 2.0;
 
     for (pos, mut transform) in &mut q {
         transform.translation = Vec3::new(
-            convert(pos.x as f32, window.width(), GRID_WIDTH as f32),
-            convert(pos.y as f32, window.height(), GRID_HEIGHT as f32),
+            offset_x + pos.x as f32 * tile + tile / 2.0,
+            offset_y + pos.y as f32 * tile + tile / 2.0,
             0.0,
         );
     }
