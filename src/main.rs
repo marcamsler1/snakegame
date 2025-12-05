@@ -11,8 +11,6 @@ const SNAKE_SEGMENT_COLOR: bevy::prelude::Color = Color::srgb(216.0/255.0, 219.0
 const FOOD_COLOR: bevy::prelude::Color = Color::srgb(171.0/255.0, 14.0/255.0, 14.0/255.0);
 
 
-// Components
-
 // Grid Position of an entity
 #[derive(Component, Clone, Copy, PartialEq, Eq)]
 struct Position {
@@ -72,7 +70,12 @@ struct SnakeSegments(Vec<Entity>);
 #[derive(Component)]
 struct Food;
 
-// Resources
+// Snake eats food
+#[derive(Message)]
+struct GrowthEvent;
+
+#[derive(Resource, Default)]
+struct LastTailPosition(Option<Position>);
 
 // Timer to spawn the foods
 #[derive(Resource)]
@@ -104,6 +107,12 @@ fn main() {
         // Add the snake tail
         .insert_resource(SnakeSegments::default())
 
+        // Last snake segment that grows
+        .insert_resource(LastTailPosition::default())
+
+        // Add growth event
+        .add_message::<GrowthEvent>()
+
         // Start systems
         .add_systems(Startup, setup)
 
@@ -112,8 +121,9 @@ fn main() {
             toggle_wireframe, 
             snake_movement_input.before(snake_movement),
             snake_movement,
-            snake_follow_segments.after(snake_movement),
-            food_spawner
+            snake_eating.after(snake_movement),
+            snake_growth.after(snake_eating),
+            food_spawner,
         ))
 
         // Update grid positions
@@ -192,33 +202,7 @@ fn spawn_segment(
     .id()
 }
 
-// Segments need to follow the head
-fn snake_follow_segments(
-    time: Res<Time>,
-    mut move_timer: ResMut<MovementTimer>,
-    mut segments: ResMut<SnakeSegments>,
-    mut positions: Query<&mut Position>,
-) {
-    if !move_timer.0.tick(time.delta()).just_finished() {
-        return;
-    }
-    
-    // Make a copy of all current segment positions
-    let mut previous_positions = Vec::new();
 
-    for &entity in segments.0.iter() {
-        if let Ok(pos) = positions.get(entity) {
-            previous_positions.push(*pos);
-        }
-    }
-
-    // Move each segment except the head
-    for (i, &entity) in segments.0.iter().enumerate().skip(1) {
-        if let Ok(mut pos) = positions.get_mut(entity) {
-            *pos = previous_positions[i -1]; 
-        }
-    }
-}
 
 
 // Read the player input and update the snake direction
@@ -250,24 +234,85 @@ fn snake_movement_input(
 fn snake_movement(
     time: Res<Time>,
     mut timer: ResMut<MovementTimer>,
-    mut query: Query <(&mut Position, &SnakeHead)>,
-){
+    mut segments: Res<SnakeSegments>,
+    mut positions: Query<&mut Position>,
+    mut last_tail_position: ResMut<LastTailPosition>,
+    heads: Query<(Entity, &SnakeHead)>,
+) {
+    // Only move on a tick
     if !timer.0.tick(time.delta()).just_finished() {
         return;
     }
 
-    let (mut pos, head) = query.single_mut().expect("SnakeHead not found");
+    // Get head entity + direction
+    let (head_entity, head) = heads.single().expect("Snakehead not found");
 
+    // Store all segment postions before a move
+    let old_positions: Vec<Position> = segments
+        .0
+        .iter()
+        .map(|&entity| *positions.get(entity).unwrap())
+        .collect();
+
+    // Move head
+    let mut head_pos = positions.get_mut(head_entity).unwrap();
     match head.direction {
-        Direction::Left => pos.x -=1,
-        Direction::Right => pos.x +=1,
-        Direction::Down => pos.y -=1,
-        Direction::Up => pos.y +=1
+        Direction::Left => head_pos.x -= 1,
+        Direction::Right => head_pos.x += 1,
+        Direction::Up => head_pos.y += 1,
+        Direction::Down => head_pos.y -= 1,
+    }
+    head_pos.x = head_pos.x.rem_euclid(GRID_WIDTH as i32);
+    head_pos.y = head_pos.y.rem_euclid(GRID_HEIGHT as i32);
+
+    // Move tail segments, skip the first one since it's the head
+    for (i, &entity) in segments.0.iter().enumerate().skip(1) {
+        let mut pos = positions.get_mut(entity).unwrap();
+        *pos = old_positions[i - 1]; // every segment takes the position from the one before
     }
 
-    pos.x = pos.x.rem_euclid(GRID_WIDTH as i32);
-    pos.y = pos.y.rem_euclid(GRID_HEIGHT as i32);
+    // Store the last tail tile
+    last_tail_position.0 = old_positions.last().copied();
 }
+
+fn snake_eating(
+    mut commands: Commands,
+    mut growth_writer: MessageWriter<GrowthEvent>,
+    food_positions: Query<(Entity, &Position), With<Food>>,
+    head_positions: Query<&Position, With<SnakeHead>>,
+) {
+    let head_pos = head_positions.single().expect("SnakeHead not found");
+    for (food_entity, food_pos) in &food_positions {
+        if food_pos == head_pos {
+            commands.entity(food_entity).despawn();
+            growth_writer.write(GrowthEvent);
+        }
+    }
+}
+
+fn snake_growth(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    last_tail_position: Res<LastTailPosition>,
+    mut segments: ResMut<SnakeSegments>,
+    mut growth_reader: MessageReader<GrowthEvent>,
+) {
+    if growth_reader.is_empty() {
+        return;
+    }
+
+    if let Some(pos) = last_tail_position.0 {
+        let new_segment = spawn_segment(
+            &mut commands,
+            &mut meshes,
+            &mut materials,
+            pos,
+        );
+        segments.0.push(new_segment);
+    }
+}
+
 
 // Scale sprites based on the tile size so the grid fits into the window
 fn size_scaling(
