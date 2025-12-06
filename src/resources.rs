@@ -31,3 +31,7 @@ pub struct LastTailPosition(pub Option<Position>);
 // Snake eats food
 #[derive(Message)]
 pub struct GrowthEvent;
+
+// Snake collides
+#[derive(Message)]
+pub struct GameOverEvent;

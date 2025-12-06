@@ -13,7 +13,7 @@ use systems::{
     state::setup,
 };
 
-use resources::{MovementTimer, FoodSpawnTimer, SnakeSegments, LastTailPosition, GrowthEvent};
+use resources::{MovementTimer, FoodSpawnTimer, SnakeSegments, LastTailPosition, GrowthEvent, GameOverEvent};
 
 
 
@@ -22,6 +22,8 @@ fn main() {
         .add_plugins(DefaultPlugins)
 
         .add_message::<GrowthEvent>()
+
+        .add_message::<GameOverEvent>()
 
         .insert_resource(MovementTimer::default())
 
