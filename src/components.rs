@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 // Grid Position of an entity
-#[derive(Component, Clone, Copy, PartialEq, Eq)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
