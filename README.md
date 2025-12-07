@@ -27,7 +27,7 @@ The classic Snake game implemented in *Rust* using the Bevy game engine. Use the
 
 - Rust toolchain (1.70+) and cargo package manager [Install here](https://www.rust-lang.org/learn/get-started)
 
-- Dependencies for bevy [official Bevy Linux dependencies page](https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md).
+- If you are using Linux, check out the following page: [Official Bevy Linux dependencies page](https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md)
 
 ### Installation
 
