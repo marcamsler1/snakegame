@@ -40,7 +40,7 @@ fn main() {
         .insert_resource(SnakeSegments::default())
         .insert_resource(LastTailPosition::default())
 
-        .add_systems(Startup, setup_camera_and_borders)
+        .add_systems(OnEnter(GameState::Playing), setup_camera_and_borders)
 
         .add_systems(OnEnter(GameState::Menu), setup_main_menu)
         .add_systems(OnExit(GameState::Menu), cleanup_main_menu)

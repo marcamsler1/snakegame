@@ -30,7 +30,13 @@ pub fn setup_camera_and_borders(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    border_query: Query<Entity, With<Border>>,
 ) {
+    // Despawn old borders
+    for entity in commands.border_query.iter() {
+        commands.entity(entity).despawn();
+    }
+
     // Spawn a 2d camera
     commands.spawn(Camera2d);
 
