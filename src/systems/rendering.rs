@@ -15,9 +15,11 @@ pub fn size_scaling(
     mut q: Query<(&Size, &mut Transform)>,
 ) {
     let window = windows.single().expect("no primary window");
+
+    let padding = 0.85;
         
-    let tile_x = window.width() / GRID_WIDTH as f32;
-    let tile_y = window.height() / GRID_HEIGHT as f32;
+    let tile_x = window.width() * padding / GRID_WIDTH as f32;
+    let tile_y = window.height() * padding / GRID_HEIGHT as f32;
     let tile = tile_x.min(tile_y);
 
     for (size, mut transform) in &mut q {
@@ -36,20 +38,16 @@ pub fn position_translation(
 ) {
     let window = windows.single().expect("no primary window");
 
-    let tile_x = window.width() / GRID_WIDTH as f32;
-    let tile_y = window.height() / GRID_HEIGHT as f32;
+    let padding = 0.85;
+
+    let tile_x = window.width() * padding / GRID_WIDTH as f32;
+    let tile_y = window.height() * padding / GRID_HEIGHT as f32;
     let tile = tile_x.min(tile_y);
-
-    let board_width = tile * GRID_WIDTH as f32;
-    let board_height = tile * GRID_HEIGHT as f32;
-
-    let offset_x = -window.width() / 2.0 + board_width / 2.0;
-    let offset_y = -window.height() / 2.0 + board_height / 2.0;
 
     for (pos, mut transform) in &mut q {
         transform.translation = Vec3::new(
-            offset_x + pos.x as f32 * tile + tile / 2.0,
-            offset_y + pos.y as f32 * tile + tile / 2.0,
+            (pos.x as f32 + 0.5 - GRID_WIDTH as f32 / 2.0) * tile,
+            (pos.y as f32 + 0.5 - GRID_HEIGHT as f32 / 2.0) * tile,
             0.0,
         );
     }

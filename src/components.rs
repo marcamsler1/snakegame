@@ -55,3 +55,7 @@ pub struct SnakeSegment;
 // Food
 #[derive(Component)]
 pub struct Food;
+
+// Border
+#[derive(Component)]
+pub struct Border;
