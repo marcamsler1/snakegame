@@ -25,7 +25,7 @@ The classic Snake game implemented in *Rust* using the Bevy game engine. Use the
 
 ### Prerequisites
 
-- Rust toolchain (1.70+) and cargo package manager [Install here](https://www.rust-lang.org/learn/get-started).
+- Rust toolchain (1.70+) and cargo package manager [Install here](https://www.rust-lang.org/learn/get-started)
 
 - Dependencies for bevy [official Bevy Linux dependencies page](https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md).
 
@@ -46,8 +46,8 @@ cargo run
 
 ## Acknowledgements
 
-The food sprites were downloaded from [here]https://henrysoftware.itch.io/pixel-food and [here](https://ghostpixxells.itch.io/pixel-mart)
+The food sprites were downloaded from https://henrysoftware.itch.io/pixel-food and [here] https://ghostpixxells.itch.io/pixel-mart
 
 ## License
 
-See [LICENSE](LICENSE) file for details.
+See [LICENSE-MIT](LICENSE-MIT) file for details.
