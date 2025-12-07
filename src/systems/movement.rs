@@ -2,13 +2,14 @@ use bevy::prelude::*;
 
 use crate::{
     components::{Position, Direction, SnakeHead},
-    resources::{MovementTimer, NextHeadPosition},
+    resources::{MovementTimer, NextHeadPosition, DirectionLocked},
 };
 
 // Move the snake once every timer tick
 pub fn snake_movement(
     time: Res<Time>,
     mut timer: ResMut<MovementTimer>,
+    mut dir_lock: ResMut<DirectionLocked>,
     heads: Query<(&Position, &SnakeHead)>,
     mut next_writer: MessageWriter<NextHeadPosition>,
 ) {
@@ -16,6 +17,9 @@ pub fn snake_movement(
     if !timer.0.tick(time.delta()).just_finished() {
         return;
     }
+
+    // Unlock input for this tick
+    dir_lock.0 = false;
 
     // Get head position + direction
     let (head_pos, head) = heads.single().expect("Snakehead not found");

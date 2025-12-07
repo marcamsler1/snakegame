@@ -1,13 +1,21 @@
 use bevy::prelude::*;
 
-use crate::components::{SnakeHead, Direction};
+use crate::{
+    components::{SnakeHead, Direction},
+    resources::DirectionLocked,
+};
 
 // Read the player input and update the snake direction
 pub fn input(
     keyboard_input: Res<ButtonInput<KeyCode>>, 
     mut heads: Query<&mut SnakeHead>,
+    mut dir_lock: ResMut<DirectionLocked>,
 ) {
     let mut head = heads.single_mut().expect("SnakeHead not found");
+
+    if dir_lock.0 {
+        return;
+    }
 
     let new_dir = if keyboard_input.just_pressed(KeyCode::ArrowLeft) || keyboard_input.just_pressed(KeyCode::KeyA) {
             Direction::Left
@@ -24,5 +32,6 @@ pub fn input(
     // Prevent turning into the opposite direction and crashing
     if new_dir != head.direction.opposite() {
         head.direction = new_dir;
+        dir_lock.0 = true;
     }
 }
