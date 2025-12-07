@@ -35,3 +35,12 @@ pub struct GrowthEvent;
 // Snake collides
 #[derive(Message)]
 pub struct GameOverEvent;
+
+// Game States
+#[derive(States, Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
+pub enum GameState {
+    #[default]
+    Menu,
+    Playing,
+    GameOver,
+}

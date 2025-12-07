@@ -10,16 +10,19 @@ use systems::{
     collision::{snake_eating, snake_growth},
     spawn::food_spawner,
     rendering::{position_translation, size_scaling},
-    state::setup,
+    setup::setup_game,
+    game_state::game_over_handler,
 };
 
-use resources::{MovementTimer, FoodSpawnTimer, SnakeSegments, LastTailPosition, GrowthEvent, GameOverEvent};
+use resources::{MovementTimer, FoodSpawnTimer, SnakeSegments, LastTailPosition, GrowthEvent, GameOverEvent, GameState};
 
 
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+
+        .init_state::<GameState>()
 
         .add_message::<GrowthEvent>()
 
@@ -33,7 +36,7 @@ fn main() {
 
         .insert_resource(LastTailPosition::default())
 
-        .add_systems(Startup, setup)
+        .add_systems(Startup, setup_game)
 
         .add_systems(Update, (
             input.before(snake_movement),
@@ -41,6 +44,7 @@ fn main() {
             snake_eating.after(snake_movement),
             snake_growth.after(snake_eating),
             food_spawner,
+            game_over_handler,
         ))
 
         .add_systems(PostUpdate, (position_translation, size_scaling))

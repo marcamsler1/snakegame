@@ -8,10 +8,10 @@ use crate::{
 
 const SNAKE_HEAD_COLOR: bevy::prelude::Color = Color::srgb(193.0/255.0, 196.0/255.0, 0.0/255.0);
 const BORDER_COLOR: bevy::prelude::Color = Color::srgb(35.0/255.0, 71.0/255.0, 125.0/255.0);
-const GRID_WIDTH: u32 = 15;
-const GRID_HEIGHT: u32 = 15;
+const GRID_WIDTH: i32 = 15;
+const GRID_HEIGHT: i32 = 15;
 
-pub fn setup(
+pub fn setup_game(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -23,11 +23,10 @@ pub fn setup(
 
     // Spawn the snake head
     let mesh = meshes.add(Rectangle::new(1.0, 1.0));
-    let snake_head_color = SNAKE_HEAD_COLOR;
 
     let head_id = commands.spawn((
         Mesh2d(mesh),
-        MeshMaterial2d(materials.add(snake_head_color)),
+        MeshMaterial2d(materials.add(SNAKE_HEAD_COLOR)),
         Position { x: 3, y: 3 },
         Size::square(1.0),
         SnakeHead { direction: Direction::Up },
@@ -59,9 +58,9 @@ pub fn spawn_borders(
 ) {
     let mesh = meshes.add(Rectangle::new(1.0, 1.0));
     let material = materials.add(BORDER_COLOR);
-
+    
     // Horizontal borders 
-    for x in 0..GRID_WIDTH {
+    for x in -1..GRID_WIDTH + 1 {
         commands.spawn((
             Mesh2d(mesh.clone()),
             MeshMaterial2d(material.clone()),
@@ -84,7 +83,7 @@ pub fn spawn_borders(
     }
 
     // Vertical borders
-    for y in 0..GRID_HEIGHT {
+    for y in -1..GRID_HEIGHT + 1 {
         commands.spawn((
             Mesh2d(mesh.clone()),
             MeshMaterial2d(material.clone()),

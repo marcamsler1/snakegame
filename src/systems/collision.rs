@@ -31,17 +31,16 @@ pub fn snake_growth(
     mut segments: ResMut<SnakeSegments>,
     mut growth_reader: MessageReader<GrowthEvent>,
 ) {
-    if growth_reader.is_empty() {
-        return;
-    }
-
-    if let Some(pos) = last_tail_position.0 {
-        let new_segment = spawn_segment(
-            &mut commands,
-            &mut meshes,
-            &mut materials,
-            pos,
-        );
-        segments.0.push(new_segment);
+    
+    for _event in growth_reader.read() {
+        if let Some(pos) = last_tail_position.0 {
+            let new_segment = spawn_segment(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                pos,
+            );
+            segments.0.push(new_segment);
+        }
     }
 }

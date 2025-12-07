@@ -42,12 +42,20 @@ pub fn snake_movement(
         Direction::Down => head_pos.y -= 1,
     }
 
+    let new_head_pos = *head_pos;
+
     // Check for a border collision
     if head_pos.x < 0
         || head_pos.x >= GRID_WIDTH as i32
         || head_pos.y < 0
         || head_pos.y >= GRID_HEIGHT as i32 
     {
+        game_over_writer.write(GameOverEvent);
+        return;
+    }
+
+    // Check for a collision with the tail
+    if old_positions.iter().skip(1).any(|&pos| pos == new_head_pos) {
         game_over_writer.write(GameOverEvent);
         return;
     }
