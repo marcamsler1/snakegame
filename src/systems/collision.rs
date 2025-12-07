@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     components::{Position, Food, SnakeHead, Border},
-    resources::{GrowthEvent, GameOverEvent, SnakeSegments, LastTailPosition, NextHeadPosition},
+    resources::{GrowthEvent, GameOverEvent, SnakeSegments, LastTailPosition, NextHeadPosition, Score},
     systems::spawn::spawn_segment,
 };
 
@@ -21,6 +21,8 @@ pub fn snake_collision(
     
     food_entities: Query<Entity, With<Food>>,
     border_entities: Query<Entity, With<Border>>,
+
+    mut score: ResMut<Score>,
 ) {
     let (head_entity, _) = head_query.single().expect("SnakeHead not found");
 
@@ -58,6 +60,8 @@ pub fn snake_collision(
         if *food_pos == next {
             commands.entity(food_entity).despawn();
             growth_writer.write(GrowthEvent);
+
+            score.0 += 1;
         }
     }
 

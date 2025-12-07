@@ -28,6 +28,9 @@ pub struct SnakeSegments(pub Vec<Entity>);
 #[derive(Resource, Default)]
 pub struct LastTailPosition(pub Option<Position>);
 
+#[derive(Resource, Default)]
+pub struct DirectionLocked(pub bool);
+
 #[derive(Message)]
 pub struct NextHeadPosition(pub Position);
 
@@ -47,3 +50,9 @@ pub enum GameState {
     Playing,
     GameOver,
 }
+
+#[derive(Resource, Default)]
+pub struct Score(pub u32);
+
+#[derive(Resource, Default)]
+pub struct HighScore(pub u32);

@@ -9,21 +9,27 @@ use systems::{
     movement::snake_movement,
     collision::{snake_collision, snake_growth},
     spawn::food_spawner,
-    rendering::{position_translation, size_scaling},
-    state::{
+    rendering::{
+        position_translation,
+        size_scaling,
         setup_camera,
         spawn_borders,
+    },
+    state::{
         setup_main_menu,
         cleanup_main_menu,
         setup_game_over_screen,
         cleanup_game_over_screen,
+        setup_score_ui,
+        cleanup_score_ui,
+        update_score_ui,
         reset_game,
         handle_game_over,
         menu_button_system,
     },
 };
 
-use resources::{MovementTimer, FoodSpawnTimer, SnakeSegments, LastTailPosition, GrowthEvent, GameOverEvent, NextHeadPosition, GameState};
+use resources::{MovementTimer, FoodSpawnTimer, SnakeSegments, LastTailPosition, DirectionLocked, GrowthEvent, GameOverEvent, NextHeadPosition, GameState, Score, HighScore};
 
 
 
@@ -41,6 +47,9 @@ fn main() {
         .insert_resource(FoodSpawnTimer::default())
         .insert_resource(SnakeSegments::default())
         .insert_resource(LastTailPosition::default())
+        .insert_resource(DirectionLocked::default())
+        .insert_resource(Score::default())
+        .insert_resource(HighScore::default())
 
         .add_systems(Startup, setup_camera)
 
@@ -50,8 +59,8 @@ fn main() {
         .add_systems(OnEnter(GameState::GameOver), setup_game_over_screen)
         .add_systems(OnExit(GameState::GameOver), cleanup_game_over_screen)
 
-        .add_systems(OnEnter(GameState::Playing), reset_game)
-        .add_systems(OnEnter(GameState::Playing), spawn_borders)
+        .add_systems(OnEnter(GameState::Playing), (reset_game, spawn_borders, setup_score_ui))
+        .add_systems(OnExit(GameState::Playing), cleanup_score_ui)
 
         .add_systems(Update, (
             menu_button_system,
@@ -60,6 +69,7 @@ fn main() {
             snake_collision.run_if(in_state(GameState::Playing)),
             snake_growth.run_if(in_state(GameState::Playing)),
             food_spawner.run_if(in_state(GameState::Playing)),
+            update_score_ui.run_if(in_state(GameState::Playing)),
             handle_game_over,
         ))
 

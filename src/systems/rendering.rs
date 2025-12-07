@@ -3,10 +3,12 @@ use bevy::{
     window::PrimaryWindow
 };
 
-use crate::components::{Size, Position};
+use crate::components::{Size, Position, Border};
 
-const GRID_WIDTH: u32 = 15;
-const GRID_HEIGHT: u32 = 15;
+const GRID_WIDTH: i32 = 15;
+const GRID_HEIGHT: i32 = 15;
+const BORDER_COLOR: bevy::prelude::Color = Color::srgb(35.0/255.0, 71.0/255.0, 125.0/255.0);
+
 
 
 // Scale sprites based on the tile size so the grid fits into the window
@@ -52,3 +54,76 @@ pub fn position_translation(
         );
     }
 }
+
+
+// Spawn a 2d camera
+pub fn setup_camera(
+    mut commands: Commands,
+) {
+    commands.spawn(Camera2d);
+}
+
+
+// Spawn the borders of the grid
+pub fn spawn_borders(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    border_query: Query<Entity, With<Border>>,
+) {
+    // Despawn old borders
+    for entity in border_query.iter() {
+        commands.entity(entity).despawn();
+    }
+
+    // Spawn visible borders
+    let mesh = meshes.add(Rectangle::new(1.0, 1.0));
+    let material = materials.add(BORDER_COLOR);
+    
+    // Horizontal borders 
+    for x in -1..GRID_WIDTH + 1 {
+        commands.spawn((
+            Mesh2d(mesh.clone()),
+            MeshMaterial2d(material.clone()),
+            Border,
+            Position { x: x as i32, y: -1 },
+            Size::square(1.0),
+            Transform::default(),
+            GlobalTransform::default(),
+        ));
+
+        commands.spawn((
+            Mesh2d(mesh.clone()),
+            MeshMaterial2d(material.clone()),
+            Border,
+            Position { x: x as i32, y: GRID_HEIGHT as i32 },
+            Size::square(1.0),
+            Transform::default(),
+            GlobalTransform::default(),
+        ));
+    }
+
+    // Vertical borders
+    for y in -1..GRID_HEIGHT + 1 {
+        commands.spawn((
+            Mesh2d(mesh.clone()),
+            MeshMaterial2d(material.clone()),
+            Border,
+            Position { x: -1, y: y as i32 },
+            Size::square(1.0),
+            Transform::default(),
+            GlobalTransform::default(),
+        ));
+
+        commands.spawn((
+            Mesh2d(mesh.clone()),
+            MeshMaterial2d(material.clone()),
+            Border,
+            Position { x: GRID_WIDTH as i32, y: y as i32 },
+            Size::square(1.0),
+            Transform::default(),
+            GlobalTransform::default(),
+        ));
+    }    
+}
+
