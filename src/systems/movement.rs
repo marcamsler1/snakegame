@@ -32,5 +32,6 @@ pub fn snake_movement(
         Direction::Down  => Position { x: head_pos.x,     y: head_pos.y - 1 },
     };
 
+    // Send a NextHeadPosition Event to check for collisions
     next_writer.write(NextHeadPosition(next));
 }

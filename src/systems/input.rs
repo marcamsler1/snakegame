@@ -13,6 +13,7 @@ pub fn input(
 ) {
     let mut head = heads.single_mut().expect("SnakeHead not found");
 
+    // Ignore the input if there is a direction lock
     if dir_lock.0 {
         return;
     }

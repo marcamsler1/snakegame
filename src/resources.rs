@@ -28,9 +28,11 @@ pub struct SnakeSegments(pub Vec<Entity>);
 #[derive(Resource, Default)]
 pub struct LastTailPosition(pub Option<Position>);
 
+// Direction lock to block multiple direction changes in the same tick
 #[derive(Resource, Default)]
 pub struct DirectionLocked(pub bool);
 
+// Check collisions for a new tile
 #[derive(Message)]
 pub struct NextHeadPosition(pub Position);
 
@@ -51,8 +53,10 @@ pub enum GameState {
     GameOver,
 }
 
+// Score
 #[derive(Resource, Default)]
 pub struct Score(pub u32);
 
+//HighScore
 #[derive(Resource, Default)]
 pub struct HighScore(pub u32);

@@ -6,7 +6,6 @@ use crate::{
     systems::spawn::spawn_segment
 };
 
-
 const SNAKE_HEAD_COLOR: bevy::prelude::Color = Color::srgb(193.0/255.0, 196.0/255.0, 0.0/255.0);
 
 #[derive(Component)]
@@ -24,7 +23,7 @@ pub enum MenuButtonAction {
     Restart,
 }
 
-// Set up the main menu screen
+// Build the main menu screen
 pub fn setup_main_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -54,6 +53,7 @@ pub fn setup_main_menu(
                     BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
                 ))
                 .with_children(|parent| {
+                    // Title
                     parent.spawn((
                         Text::new("SNAKE"),
                         TextFont {
@@ -63,23 +63,23 @@ pub fn setup_main_menu(
                         },
                         TextColor(Color::WHITE),
                     ));
-
-                    parent
-                        .spawn((
-                            Button,
-                            MenuButtonAction::Play,
-                            Node {
-                                margin: UiRect::all(Val::Px(16.0)),
-                                padding: UiRect::all(Val::Px(12.0)),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..Default::default()
-                            },
-                            BackgroundColor(Color::srgb(0.0, 0.5, 0.0)),
+                    
+                    // Start button
+                    parent.spawn((
+                        Button,
+                        MenuButtonAction::Play,
+                        Node {
+                            margin: UiRect::all(Val::Px(16.0)),
+                            padding: UiRect::all(Val::Px(12.0)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..Default::default()
+                        },
+                        BackgroundColor(Color::srgb(0.0, 0.5, 0.0)),
                         ))
                         .with_children(|button| {
                             button.spawn((
-                                Text::new("Start"),
+                                Text::new("Start game"),
                                 TextFont {
                                     font: font.clone(),
                                     font_size: 24.0,
@@ -92,6 +92,7 @@ pub fn setup_main_menu(
         });
 }
 
+// Remove the main menu screen
 pub fn cleanup_main_menu(
     mut commands: Commands,
     roots: Query<Entity, With<MainMenuUI>>,
@@ -101,6 +102,7 @@ pub fn cleanup_main_menu(
     }
 }
 
+// Build the game over screen
 pub fn setup_game_over_screen(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -141,7 +143,7 @@ pub fn setup_game_over_screen(
                 .with_children(|panel| {
                     // Title
                     panel.spawn((
-                        Text::new("Game Over"),
+                        Text::new("Game Over :("),
                         TextFont {
                             font: font.clone(),
                             font_size: 40.0,
@@ -173,22 +175,21 @@ pub fn setup_game_over_screen(
                     ));
 
                     // Restart Button
-                    panel
-                        .spawn((
-                            Button,
-                            MenuButtonAction::Restart,
-                            Node {
-                                margin: UiRect::all(Val::Px(16.0)),
-                                padding: UiRect::all(Val::Px(12.0)),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
-                            BackgroundColor(Color::srgb(0.5, 0.0, 0.0)),
+                    panel.spawn((
+                        Button,
+                        MenuButtonAction::Restart,
+                        Node {
+                            margin: UiRect::all(Val::Px(16.0)),
+                            padding: UiRect::all(Val::Px(12.0)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.5, 0.0, 0.0)),
                         ))
                         .with_children(|button| {
                             button.spawn((
-                                Text::new("Restart"),
+                                Text::new("Start a new game"),
                                 TextFont {
                                     font: font.clone(),
                                     font_size: 24.0,
@@ -201,7 +202,7 @@ pub fn setup_game_over_screen(
         });
 }
 
-
+// Remove the game over screen
 pub fn cleanup_game_over_screen(
     mut commands: Commands,
     roots: Query<Entity, With<GameOverUI>>,
@@ -211,7 +212,7 @@ pub fn cleanup_game_over_screen(
     }
 }
 
-
+// Button interaction system
 pub fn menu_button_system(
     mut next_state: ResMut<NextState<GameState>>,
     mut interaction_query: Query<
@@ -239,7 +240,7 @@ pub fn menu_button_system(
     }
 }
 
-
+// Set Game Over if we receive a GameOverEvent
 pub fn handle_game_over(
     mut reader: MessageReader<GameOverEvent>,
     mut next_state: ResMut<NextState<GameState>>,
@@ -250,6 +251,7 @@ pub fn handle_game_over(
     }    
 }
 
+// Build the score UI
 pub fn setup_score_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -274,6 +276,7 @@ pub fn setup_score_ui(
 ));
 }
 
+// Update the scores when eating food
 pub fn update_score_ui(
     score: Res<Score>,
     mut query: Query<&mut Text, With<ScoreUI>>,
@@ -285,6 +288,7 @@ pub fn update_score_ui(
     }
 }
 
+// Remove the Score UI
 pub fn cleanup_score_ui(
     mut commands: Commands,
     ui_query: Query<Entity, With<ScoreUI>>,
@@ -294,7 +298,7 @@ pub fn cleanup_score_ui(
     }
 }
 
-
+// Start a new game
 pub fn reset_game(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
