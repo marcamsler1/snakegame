@@ -10,8 +10,16 @@ use systems::{
     collision::{snake_eating, snake_growth},
     spawn::food_spawner,
     rendering::{position_translation, size_scaling},
-    setup::setup_game,
-    game_state::game_over_handler,
+    state::{
+        setup_camera_and_borders,
+        setup_main_menu,
+        cleanup_main_menu,
+        setup_game_over_screen,
+        cleanup_game_over_screen,
+        reset_game,
+        handle_game_over,
+        menu_button_system,
+    },
 };
 
 use resources::{MovementTimer, FoodSpawnTimer, SnakeSegments, LastTailPosition, GrowthEvent, GameOverEvent, GameState};
@@ -25,26 +33,31 @@ fn main() {
         .init_state::<GameState>()
 
         .add_message::<GrowthEvent>()
-
         .add_message::<GameOverEvent>()
 
         .insert_resource(MovementTimer::default())
-
         .insert_resource(FoodSpawnTimer::default())
-
         .insert_resource(SnakeSegments::default())
-
         .insert_resource(LastTailPosition::default())
 
-        .add_systems(Startup, setup_game)
+        .add_systems(Startup, setup_camera_and_borders)
+
+        .add_systems(OnEnter(GameState::Menu), setup_main_menu)
+        .add_systems(OnExit(GameState::Menu), cleanup_main_menu)
+
+        .add_systems(OnEnter(GameState::GameOver), setup_game_over_screen)
+        .add_systems(OnExit(GameState::GameOver), cleanup_game_over_screen)
+
+        .add_systems(OnEnter(GameState::Playing), reset_game)
 
         .add_systems(Update, (
-            input.before(snake_movement),
-            snake_movement,
-            snake_eating.after(snake_movement),
-            snake_growth.after(snake_eating),
-            food_spawner,
-            game_over_handler,
+            menu_button_system,
+            input.run_if(in_state(GameState::Playing)),
+            snake_movement.run_if(in_state(GameState::Playing)),
+            snake_eating.run_if(in_state(GameState::Playing)),
+            snake_growth.run_if(in_state(GameState::Playing)),
+            food_spawner.run_if(in_state(GameState::Playing)),
+            handle_game_over,
         ))
 
         .add_systems(PostUpdate, (position_translation, size_scaling))
