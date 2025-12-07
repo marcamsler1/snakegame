@@ -25,21 +25,23 @@ pub enum MenuButtonAction {
     Restart,
 }
 
+pub fn setup_camera(
+    mut commands: Commands,
+) {
+    // Spawn a 2d camera
+    commands.spawn(Camera2d);
+}
 
-pub fn setup_camera_and_borders(
+pub fn spawn_borders(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     border_query: Query<Entity, With<Border>>,
 ) {
     // Despawn old borders
-    for entity in commands.border_query.iter() {
+    for entity in border_query.iter() {
         commands.entity(entity).despawn();
     }
-
-    // Spawn a 2d camera
-    commands.spawn(Camera2d);
-
 
     // Spawn visible borders
     let mesh = meshes.add(Rectangle::new(1.0, 1.0));
