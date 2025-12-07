@@ -43,10 +43,14 @@ cd snakegame
 cargo run
 ```
 
+Note: Running the project for the first time may take several minutes, since Cargo must download and compile all Bevy engine dependencies, which include graphics, input, math, rendering, and windowing crates.
+
+After the first run, future builds are much faster.
+
 
 ## Acknowledgements
 
-The food sprites were downloaded from https://henrysoftware.itch.io/pixel-food and [here] https://ghostpixxells.itch.io/pixel-mart
+The food sprites were downloaded from https://henrysoftware.itch.io/pixel-food and https://ghostpixxells.itch.io/pixel-mart
 
 ## License
 
