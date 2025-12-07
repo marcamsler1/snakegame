@@ -9,13 +9,13 @@ pub fn input(
 ) {
     let mut head = heads.single_mut().expect("SnakeHead not found");
 
-    let new_dir = if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
+    let new_dir = if keyboard_input.just_pressed(KeyCode::ArrowLeft) || keyboard_input.just_pressed(KeyCode::KeyA) {
             Direction::Left
-        } else if keyboard_input.just_pressed(KeyCode::ArrowRight) {
+        } else if keyboard_input.just_pressed(KeyCode::ArrowRight) || keyboard_input.just_pressed(KeyCode::KeyD) {
             Direction::Right
-        } else if keyboard_input.just_pressed(KeyCode::ArrowDown) {
+        } else if keyboard_input.just_pressed(KeyCode::ArrowDown) || keyboard_input.just_pressed(KeyCode::KeyS) {
             Direction::Down
-        } else if keyboard_input.just_pressed(KeyCode::ArrowUp) {
+        } else if keyboard_input.just_pressed(KeyCode::ArrowUp) || keyboard_input.just_pressed(KeyCode::KeyW) {
             Direction::Up
         } else {
             return;
